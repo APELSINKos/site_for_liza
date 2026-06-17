@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "devices": {
+      "$uid": {
+        ".read": true,
+        ".write": true,
+        "episodes": {
+          "$episode": {
+            ".validate": "newData.hasChildren(['date','state'])",
+            "date": { ".validate": "newData.isString()" },
+            "state": { ".validate": "newData.isString()" },
+            "achievement": { ".validate": "newData.isString()" },
+            "uid": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" }
+          }
+        },
+        "wishes": {
+          "$wishId": {
+            ".validate": "newData.hasChildren(['date'])",
+            "date": { ".validate": "newData.isString()" },
+            "place": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" }
+          }
+        }
+      }
+    }
+  }
+}

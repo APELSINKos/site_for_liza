@@ -1,0 +1,100 @@
+:root {
+  --night-0: #07050d;
+  --night-1: #0b0712;
+  --night-2: #15101f;
+  --plum:    #3a1d40;
+  --mauve:   #6d2f53;
+  --rose:    #c14b6e;
+  --coral:   #ff7a59;
+  --amber:   #ffb46b;
+  --peach:   #ffd9a0;
+
+  --matcha:      #a8d5b0;
+  --matcha-deep: #6fae7e;
+  --matcha-glow: rgba(168, 213, 176, 0.55);
+
+  --text:      #f6efe9;
+  --text-soft: rgba(246, 239, 233, 0.66);
+  --text-dim:  rgba(246, 239, 233, 0.38);
+
+  --glass-bg:     rgba(22, 16, 31, 0.34);
+  --glass-bg-2:   rgba(22, 16, 31, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.16);
+
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --serif: "Cormorant Garamond", "Playfair Display", Georgia, "Times New Roman", serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --vh: 100vh;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: var(--night-1);
+  color: var(--text);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+body {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+img { max-width: 100%; display: block; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+
+#app, .drawer, .achievement, .hamburger {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: var(--vh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.02);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease), visibility 0s linear 0.9s;
+  overflow: hidden;
+}
+
+.screen.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease), visibility 0s linear 0s;
+  z-index: 2;
+}
+
+.stars-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  .screen { transition-duration: 0.2s; }
+}

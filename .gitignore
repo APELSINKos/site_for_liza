@@ -1,0 +1,12 @@
+# Firebase CLI local deploy cache (regenerated on each deploy)
+.firebase/
+
+# Wrangler (Cloudflare) local cache
+worker/.wrangler/
+
+# Dependencies (none yet, but just in case)
+node_modules/
+
+# OS / editor junk
+Thumbs.db
+.DS_Store
