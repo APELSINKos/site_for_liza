@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="css/intro.css" />
   <link rel="stylesheet" href="css/scene.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/episode2.css" />
 </head>
 <body>
   <main id="app">
@@ -113,6 +114,34 @@
       </div>
     </section>
 
+    <section id="episode2" class="screen" aria-label="Эпизод 2 — пикник">
+      <div class="ep2-bg" aria-hidden="true">
+        <span class="peony peony-1"></span>
+        <span class="peony peony-2"></span>
+        <span class="peony peony-3"></span>
+      </div>
+
+      <div class="ep2-inner">
+        <p class="ep2-kicker">Эпизод 2</p>
+        <h1 class="ep2-title">Как насчёт пикника с рисованием?</h1>
+        <p class="ep2-text">Скетчбуки? Акварель? Палитры? А может даже холст?</p>
+      </div>
+
+      <div id="ep2ToastsTop" class="ep2-toasts ep2-toasts-top" aria-live="polite"></div>
+      <div id="ep2Toasts" class="ep2-toasts ep2-toasts-bottom" aria-live="polite"></div>
+
+      <div id="ep2Picker" class="ep2-picker" aria-hidden="true">
+        <div class="ep2-picker-scrim" id="ep2PickerScrim"></div>
+        <div class="ep2-picker-card">
+          <button class="ep2-pick-close" id="ep2PickClose" type="button" aria-label="Закрыть">×</button>
+          <h2 class="ep2-pick-title" id="ep2PickTitle">Когда устроим пикник?</h2>
+          <div class="ep2-cal" id="ep2Cal"></div>
+          <button class="ep2-pick-confirm" id="ep2PickConfirm" type="button">Подтвердить</button>
+          <p class="ep2-pick-hint" id="ep2PickHint">выбери день</p>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <button id="hamburger" class="hamburger" type="button" aria-label="Меню" hidden>
@@ -137,8 +166,24 @@
 
       <h3 class="drawer-h">История</h3>
       <ul id="menuHistory" class="drawer-list drawer-history"></ul>
+
+      <button id="secretPhraseBtn" class="drawer-secret" type="button">Введи секретную фразу</button>
     </nav>
   </aside>
+
+  <div id="phraseModal" class="phrase-modal" aria-hidden="true">
+    <div class="phrase-scrim" id="phraseScrim"></div>
+    <div class="phrase-box" role="dialog" aria-modal="true" aria-label="Секретная фраза">
+      <button class="phrase-close" id="phraseClose" type="button" aria-label="Закрыть">×</button>
+      <h3 class="phrase-h">Секретная фраза</h3>
+      <p class="phrase-sub">Введи фразу — и откроется новый эпизод</p>
+      <input id="phraseInput" class="phrase-input" type="text"
+             autocomplete="off" autocapitalize="none" autocorrect="off"
+             spellcheck="false" placeholder="…" />
+      <button id="phraseSubmit" class="phrase-submit" type="button">Открыть</button>
+      <p id="phraseMsg" class="phrase-msg" aria-live="polite"></p>
+    </div>
+  </div>
 
   <div id="achievement" class="achievement" aria-hidden="true">
     <div class="ach-icon" id="achIcon">🌸</div>
@@ -159,6 +204,7 @@
   <script defer src="js/firebase.js"></script>
   <script defer src="js/telegram.js"></script>
   <script defer src="js/canvas.js"></script>
+  <script defer src="js/episode2.js"></script>
   <script defer src="js/app.js"></script>
 </body>
 </html>

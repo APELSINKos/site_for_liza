@@ -42,5 +42,23 @@
     return Promise.resolve(false);
   }
 
+  // Check a secret-phrase guess against the Worker. The phrase list lives only
+  // in server-side KV, so the answer is never present in the page. The Worker
+  // also notifies the owner of every attempt. Resolves to { ok, episode, error }.
+  function checkPhrase(phrase) {
+    var t = window.TELEGRAM || {};
+    var base = t.proxyUrl ? String(t.proxyUrl).replace(/\/+$/, "") : "";
+    if (!base) return Promise.resolve({ ok: false, error: "noproxy" });
+    return fetch(base + "/phrase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phrase: phrase }),
+      cache: "no-store"
+    })
+      .then(function (r) { return r && r.ok ? r.json() : { ok: false, error: "http" }; })
+      .catch(function () { return { ok: false, error: "net" }; });
+  }
+
   window.sendTelegram = sendTelegram;
+  window.checkPhrase = checkPhrase;
 })();

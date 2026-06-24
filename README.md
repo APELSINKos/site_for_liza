@@ -36,6 +36,8 @@ front-end dependencies and no bundler**.
 | **2 · Sunset** | The player dissolves into a painterly sunset. A spinning star falls along a Bézier arc and detonates over a skyline with a layered fireball, shockwaves, embers and smoke. |
 | **3 · Calendar** | An interactive month picker (Monday-first, localized) to choose a day — with a playful "escape" button that refuses to be clicked. |
 | **4 · Re-entry** | On return, the site greets you with a mystery screen and a side drawer holding your saved dates, wishes, achievements, and a replayable history of past visits. |
+| **5 · Secret episodes** | A "secret phrase" box hides at the bottom of the drawer. Type the right words and a brand-new episode unlocks — the answer is never in the page, it's verified server-side. |
+| **6 · Episode 2 · Picnic** | A calm, daytime invitation ("How about a picnic with painting?") over faint white peonies. A cheeky toast — *art tuition required, payable in croissants & coffee* — keeps coming back (close one and two return) until you pick a date, then drops you back home. No music, no achievement here. |
 
 ## 🧩 Features
 
@@ -44,6 +46,8 @@ front-end dependencies and no bundler**.
 - 🌌 **Generative starfield** — seeded constellations that link to nearby stars and to the cursor.
 - 💾 **Per-device persistence** — state is namespaced per device in Firebase Realtime DB, with a transparent `localStorage` fallback so it never breaks offline.
 - 🔔 **Serverless notifications** — a Cloudflare Worker relays interaction events to the author over Telegram while keeping the bot token **off the client entirely**.
+- 🔐 **Server-side secret phrases** — episodes unlock by typing a phrase that lives only in Cloudflare KV. The browser submits a guess and gets back nothing but `{ ok, episode }`, so the answer never appears in the page source or element inspector. The author manages the phrase list (`Phrase:` / `Edit` / `Delete` / `List`) just by messaging the Telegram bot, and gets pinged with every guess.
+- 🧺 **Unlockable Episode 2** — a deliberately understated picnic chapter with a CSS-painted peony backdrop, a self-respawning toast (close one → two return, one of them top-right), and a date picker that reports back over Telegram.
 - 🖼 **In-browser image keying** — the building photo is white-keyed to transparency and auto-trimmed on a canvas at load time, no pre-processing required.
 - 📱 **Mobile-first & resilient** — robust autoplay unlocking for iOS/in-app browsers, safe-area handling, dynamic viewport-height fix, and `prefers-reduced-motion` support.
 
@@ -53,9 +57,17 @@ front-end dependencies and no bundler**.
 flowchart LR
   U[Browser · vanilla JS] -->|per-device state| DB[(Firebase Realtime DB)]
   U -->|"POST { text }"| W[Cloudflare Worker]
+  U -->|"POST { phrase }"| W
+  W <-->|phrase list| KV[(Cloudflare KV)]
   W -->|token stays server-side| TG[Telegram Bot API]
+  TG -->|"webhook: Phrase / Edit / Delete"| W
   H[Firebase Hosting] -.serves.-> U
 ```
+
+The same Worker now also guards the secret phrases: it stores them in **Cloudflare KV**,
+answers the site's guesses without ever revealing the list, and accepts owner-only
+management commands from Telegram via a webhook. See [`worker/README.md`](worker/README.md)
+for the one-time setup (KV namespace, secrets, webhook) and the bot command reference.
 
 The front end is a set of small IIFE modules with a single responsibility each, wired
 together by one flow controller (`app.js`). The only server-side piece is the Cloudflare
@@ -78,15 +90,16 @@ that block the Telegram API directly.
 ```
 .
 ├── index.html              # single entry point
-├── css/                    # base tokens, intro/player, scene, components
+├── css/                    # base tokens, intro/player, scene, components, episode 2
 ├── js/
 │   ├── config.js           # public Firebase config + notification endpoint
-│   ├── data.js             # lyrics timeline + content
+│   ├── data.js             # lyrics timeline + episode definitions
 │   ├── firebase.js         # storage wrapper (RTDB + localStorage)
-│   ├── telegram.js         # notification client (talks to the Worker)
+│   ├── telegram.js         # notification + secret-phrase client (talks to the Worker)
 │   ├── canvas.js           # starfield + shooting star + explosion engine
+│   ├── episode2.js         # self-contained "picnic" episode (toasts + date/time picker)
 │   └── app.js              # flow controller / state machine / audio / karaoke
-├── worker/                 # Cloudflare Worker (Telegram proxy)
+├── worker/                 # Cloudflare Worker: Telegram proxy + KV phrase gateway
 ├── firebase.json           # hosting + database config
 └── database.rules.json     # Realtime Database security rules
 ```

@@ -4,6 +4,21 @@
 # Wrangler (Cloudflare) local cache
 worker/.wrangler/
 
+# Local tool config and caches — never push
+.*/
+
+# Secrets — never push (tokens, API keys, wrangler local vars)
+.env
+.env.*
+.dev.vars
+worker/.dev.vars
+*.secret
+
+# Personal helper / setup notes — for me only, not for GitHub
+worker/README.md
+*-setup.md
+SETUP.md
+
 # Dependencies (none yet, but just in case)
 node_modules/
 

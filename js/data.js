@@ -11,6 +11,17 @@ window.EPISODES = [
     datePrompt: "Когда ты свободна?",
     notifyClick: "Нажата кнопка матча",
     notifyDatePrefix: "Выбрана дата:"
+  },
+  {
+    // Unlocked only by a secret phrase (checked server-side). Has its own
+    // self-contained flow in js/episode2.js — no karaoke / sunset / music,
+    // and (by request) no achievement.
+    id: "ep2",
+    kind: "picnic",
+    fbPath: "episodes/ep2",
+    icon: "🧺",
+    label: "Пикник",
+    notifyDatePrefix: "Пикник запланирован:"
   }
 ];
 

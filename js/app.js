@@ -16,7 +16,10 @@
     hamburger: $("hamburger"), drawer: $("drawer"), drawerScrim: $("drawerScrim"), replayBack: $("replayBack"), addWishDrawer: $("addWishDrawer"),
     menuDates: $("menuDates"), menuWishes: $("menuWishes"), menuAch: $("menuAchievements"), menuHistory: $("menuHistory"),
     achievement: $("achievement"), achIcon: $("achIcon"), achTitle: $("achTitle"),
-    track: $("track"), pling: $("pling")
+    track: $("track"), pling: $("pling"),
+    secretPhraseBtn: $("secretPhraseBtn"),
+    phraseModal: $("phraseModal"), phraseScrim: $("phraseScrim"), phraseClose: $("phraseClose"),
+    phraseInput: $("phraseInput"), phraseSubmit: $("phraseSubmit"), phraseMsg: $("phraseMsg")
   };
 
   var MONTHS_NOM = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
@@ -45,6 +48,16 @@
   function humanFromISO(iso) {
     var p = (iso || "").split("-"); if (p.length !== 3) return iso || "";
     return parseInt(p[2], 10) + " " + MONTHS_GEN[parseInt(p[1], 10) - 1] + " " + p[0];
+  }
+  function whenLabel(state) {
+    if (!state) return "";
+    return humanFromISO(state.date) + (state.time ? ", " + state.time : "");
+  }
+  function histBadge(x) {
+    if (x.ep.achievement) {
+      return escapeHtml(x.ep.achievement.icon || "🌸") + " «" + escapeHtml(x.state.achievement || x.ep.achievement.title || "") + "»";
+    }
+    return escapeHtml(x.ep.icon || "📍") + " " + escapeHtml(x.ep.label || "Эпизод");
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
   function fadeAudio(a, to, ms) {
@@ -418,15 +431,16 @@
   function wireGreen() { el.greenBtn.addEventListener("click", onGreen); }
   function onGreen() {
     showAchievement(currentEp.achievement);
-    playPling();
     if (!replayMode && currentEp.notifyClick) window.sendTelegram(currentEp.notifyClick);
     setTimeout(function () { openDatePicker("initial"); }, 1000);
   }
+  // Every achievement always sounds achievement.mp3.
   function showAchievement(ach) {
     el.achIcon.textContent = (ach && ach.icon) || "🌸";
     el.achTitle.textContent = "«" + ((ach && ach.title) || "Начало?") + "»";
     el.achievement.classList.add("is-shown");
     el.achievement.setAttribute("aria-hidden", "false");
+    playPling();
     clearTimeout(el._achTimer);
     el._achTimer = setTimeout(function () {
       el.achievement.classList.remove("is-shown");
@@ -570,19 +584,20 @@
       var done = list.filter(function (x) { return x.state && x.state.state === "completed"; });
 
       el.menuDates.innerHTML = done.length
-        ? done.map(function (x) { return "<li>" + escapeHtml(humanFromISO(x.state.date)) + "</li>"; }).join("")
+        ? done.map(function (x) { return "<li>" + escapeHtml(whenLabel(x.state)) + "</li>"; }).join("")
         : '<li class="muted">пока пусто</li>';
 
-      el.menuAch.innerHTML = done.length
-        ? done.map(function (x) { return "<li>" + escapeHtml((x.ep.achievement && x.ep.achievement.icon) || "🌸") + " «" + escapeHtml(x.state.achievement || "") + "»</li>"; }).join("")
+      var achDone = done.filter(function (x) { return x.ep.achievement; });
+      el.menuAch.innerHTML = achDone.length
+        ? achDone.map(function (x) { return "<li>" + escapeHtml(x.ep.achievement.icon || "🌸") + " «" + escapeHtml(x.state.achievement || x.ep.achievement.title || "") + "»</li>"; }).join("")
         : '<li class="muted">пока пусто</li>';
 
       el.menuHistory.innerHTML = done.length
         ? done.map(function (x, i) {
-            return '<li data-ep="' + escapeHtml(x.ep.id) + '" data-num="' + (i + 1) + '" data-when="' + escapeHtml(humanFromISO(x.state.date)) + '">' +
+            return '<li data-ep="' + escapeHtml(x.ep.id) + '" data-num="' + (i + 1) + '" data-when="' + escapeHtml(whenLabel(x.state)) + '">' +
               '<div class="hist-top"><span class="hist-ep">Эпизод ' + (i + 1) + "</span>" +
-              '<span class="hist-badge">' + escapeHtml((x.ep.achievement && x.ep.achievement.icon) || "🌸") + " «" + escapeHtml(x.state.achievement || "") + "»</span></div>" +
-              '<span class="muted">' + escapeHtml(humanFromISO(x.state.date)) + "</span>" +
+              '<span class="hist-badge">' + histBadge(x) + "</span></div>" +
+              '<span class="muted">' + escapeHtml(whenLabel(x.state)) + "</span>" +
               '<span class="hist-replay">↻ нажми, чтобы пережить заново</span></li>';
           }).join("")
         : '<li class="muted">пока пусто</li>';
@@ -594,6 +609,7 @@
           closeDrawer();
           window.sendTelegram("Открыта история: Эпизод " + (li.getAttribute("data-num") || "?") + " (" + (li.getAttribute("data-when") || "") + ")");
           currentEp = ep;
+          if (ep.kind === "picnic" && window.Episode2) { window.Episode2.start(ep); return; }
           enterIntro({ replay: true });
         });
       });
@@ -605,6 +621,81 @@
     });
   }
 
+  // ---- Secret phrase -> unlock episodes -----------------------------------
+  function setPhraseMsg(text, kind) {
+    el.phraseMsg.textContent = text || "";
+    el.phraseMsg.className = "phrase-msg" + (kind ? " is-" + kind : "");
+  }
+  function shakeBox() {
+    var box = el.phraseModal.querySelector(".phrase-box");
+    if (!box) return;
+    box.classList.remove("is-shake"); void box.offsetWidth; box.classList.add("is-shake");
+  }
+  function openPhraseModal() {
+    el.phraseInput.value = "";
+    setPhraseMsg("", "");
+    el.phraseSubmit.disabled = false;
+    el.phraseModal.classList.add("is-open");
+    el.phraseModal.setAttribute("aria-hidden", "false");
+    setTimeout(function () { try { el.phraseInput.focus(); } catch (e) {} }, 60);
+  }
+  function closePhraseModal() {
+    el.phraseModal.classList.remove("is-open");
+    el.phraseModal.setAttribute("aria-hidden", "true");
+  }
+  function launchEpisode(ep) {
+    currentEp = ep;
+    if (ep.kind === "picnic" && window.Episode2) { window.Episode2.start(ep); return; }
+    enterIntro({ replay: false });
+  }
+  function submitPhrase() {
+    var phrase = (el.phraseInput.value || "").trim();
+    if (!phrase) { setPhraseMsg("Введи фразу", "err"); shakeBox(); return; }
+    el.phraseSubmit.disabled = true;
+    setPhraseMsg("Проверяю…", "");
+    window.checkPhrase(phrase).then(function (res) {
+      if (res && res.ok) {
+        setPhraseMsg("Открываю…", "ok");
+        var ep = null, list = window.EPISODES || [];
+        for (var i = 0; i < list.length; i++) if (list[i].id === res.episode) ep = list[i];
+        setTimeout(function () {
+          closePhraseModal();
+          closeDrawer();
+          if (ep) launchEpisode(ep);
+        }, 650);
+      } else {
+        el.phraseSubmit.disabled = false;
+        if (res && (res.error === "net" || res.error === "http" || res.error === "noproxy")) {
+          setPhraseMsg("Не получилось проверить. Попробуй ещё раз.", "err");
+        } else {
+          setPhraseMsg("Хм, это не та фраза.", "err");
+          shakeBox();
+        }
+      }
+    });
+  }
+
+  function pauseAudio() {
+    try {
+      el.track.pause();
+      el.vinyl.classList.remove("is-playing");
+      document.body.classList.remove("is-playing-audio");
+    } catch (e) {}
+    stopKaraokeLoop();
+  }
+
+  // Surface a small API so self-contained episode modules (episode2.js) can
+  // drive the shared shell without reaching into these closures directly.
+  window.AppFlow = {
+    show: show,
+    pauseAudio: pauseAudio,
+    deactivateSkies: deactivateAllSkies,
+    setCurrentEp: function (ep) { currentEp = ep; },
+    showAchievement: function (ach) { showAchievement(ach); },
+    finishEpisode2: function () { refreshMenus(true); enterMystery(); },
+    backToMystery: function () { refreshMenus(false); enterMystery(); }
+  };
+
   function init() {
     notifyVisit();
     buildKaraoke();
@@ -615,10 +706,25 @@
     wireDrawer();
     el.dpConfirm.addEventListener("click", function () { if (dpSelected) finalizeDate(dpSelected); });
     el.dpBack.addEventListener("click", function () { enterMystery(); });
-    el.changeDateBtn.addEventListener("click", function () { openDatePicker("change"); });
+    el.changeDateBtn.addEventListener("click", function () {
+      if (currentEp && currentEp.kind === "picnic" && window.Episode2) { closeDrawer(); window.Episode2.openPicker("change"); }
+      else openDatePicker("change");
+    });
     el.addWishBtn.addEventListener("click", function () { openDatePicker("add"); });
     el.addWishDrawer.addEventListener("click", function () { closeDrawer(); openDatePicker("add"); });
     el.replayBack.addEventListener("click", function () { replayMode = false; stopKaraokeLoop(); enterMystery(); });
+
+    el.secretPhraseBtn.addEventListener("click", openPhraseModal);
+    el.phraseClose.addEventListener("click", closePhraseModal);
+    el.phraseScrim.addEventListener("click", closePhraseModal);
+    el.phraseSubmit.addEventListener("click", submitPhrase);
+    el.phraseInput.addEventListener("keydown", function (e) { if (e.key === "Enter") submitPhrase(); });
+
+    // Local-only preview of Episode 2 (design iteration): open with #ep2 on localhost.
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.hash === "#ep2" && window.Episode2) {
+      window.Episode2.start();
+      return;
+    }
 
     window.Store.read(epPath(currentEp)).then(function (state) {
       if (state && state.state === "completed") {

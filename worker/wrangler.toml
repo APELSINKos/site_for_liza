@@ -2,3 +2,15 @@ name = "liza-tg"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 workers_dev = true
+
+# KV namespace that stores the secret phrases (server-side only).
+# Create it once:  wrangler kv namespace create PHRASES
+# then paste the printed id below.
+[[kv_namespaces]]
+binding = "PHRASES"
+id = "4ae6c0c4308e4fcab8aac1674d45e155"
+
+# Secrets (do NOT put these here — set them with `wrangler secret put`):
+#   BOT_TOKEN       Telegram bot token
+#   CHAT_ID         your Telegram chat id
+#   WEBHOOK_SECRET  random string used in the /tg/<secret> webhook path
