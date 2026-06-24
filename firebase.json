@@ -10,6 +10,7 @@
       "database.rules.json",
       "README-setup.md",
       "**/.*",
+      "**/.*/**",
       ".git/**",
       ".gitignore",
       "**/*.zip",
